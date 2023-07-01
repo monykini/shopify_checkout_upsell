@@ -89,7 +89,9 @@ function App() {
   // filteredProducts = products.filter((product) => {
   //   return !lines.some((line) => line.merchandise.id === product.variants.nodes[0].id);
   // });
-
+  products.map((product) => {
+    product.onPress = handlePress;
+  })
   return products.length == 0 ? null : (
     <BlockStack spacing="loose">
       <Horizontal
