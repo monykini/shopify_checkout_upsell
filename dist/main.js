@@ -1174,7 +1174,7 @@
             }
             return dispatcher.useContext(Context, unstable_observedBits);
           }
-          function useState3(initialState) {
+          function useState4(initialState) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useState(initialState);
           }
@@ -1186,7 +1186,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect4(create, deps) {
+          function useEffect2(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -1198,7 +1198,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useCallback(callback, deps);
           }
-          function useMemo3(create, deps) {
+          function useMemo2(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useMemo(create, deps);
           }
@@ -1758,13 +1758,13 @@
           exports.useCallback = useCallback3;
           exports.useContext = useContext3;
           exports.useDebugValue = useDebugValue;
-          exports.useEffect = useEffect4;
+          exports.useEffect = useEffect2;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useLayoutEffect = useLayoutEffect;
-          exports.useMemo = useMemo3;
+          exports.useMemo = useMemo2;
           exports.useReducer = useReducer;
           exports.useRef = useRef2;
-          exports.useState = useState3;
+          exports.useState = useState4;
           exports.version = ReactVersion;
         })();
       }
@@ -2578,11 +2578,11 @@
         module.exports = function $$$reconciler($$$hostConfig) {
           var exports2 = {};
           "use strict";
-          var React5 = require_react();
+          var React7 = require_react();
           var _assign = require_object_assign();
           var Scheduler = require_scheduler();
           var tracing = require_tracing();
-          var ReactSharedInternals = React5.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+          var ReactSharedInternals = React7.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
           function warn(format) {
             {
               for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
@@ -5292,7 +5292,7 @@
           }
           var fakeInternalInstance = {};
           var isArray = Array.isArray;
-          var emptyRefsObject = new React5.Component().refs;
+          var emptyRefsObject = new React7.Component().refs;
           var didWarnAboutStateAssignmentForComponent;
           var didWarnAboutUninitializedState;
           var didWarnAboutGetSnapshotBeforeUpdateWithoutDidUpdate;
@@ -15718,7 +15718,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
       if (true) {
         (function() {
           "use strict";
-          var React5 = require_react();
+          var React7 = require_react();
           var _assign = require_object_assign();
           var REACT_ELEMENT_TYPE = 60103;
           var REACT_PORTAL_TYPE = 60106;
@@ -15775,7 +15775,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
             }
             return null;
           }
-          var ReactSharedInternals = React5.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+          var ReactSharedInternals = React7.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
           function error(format) {
             {
               for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
@@ -16550,10 +16550,10 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
               return jsxWithValidation(type, props, key, false);
             }
           }
-          var jsx8 = jsxWithValidationDynamic;
-          var jsxs4 = jsxWithValidationStatic;
-          exports.jsx = jsx8;
-          exports.jsxs = jsxs4;
+          var jsx10 = jsxWithValidationDynamic;
+          var jsxs7 = jsxWithValidationStatic;
+          exports.jsx = jsx10;
+          exports.jsxs = jsxs7;
         })();
       }
     }
@@ -16572,15 +16572,204 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
   });
 
   // extensions/my-checkout-upsell-digitsonly/src/index.jsx
-  var import_react22 = __toESM(require_react());
+  var import_react25 = __toESM(require_react());
 
   // node_modules/@shopify/checkout-ui-extensions/build/esm/extend.mjs
   var extend = (...args) => self.shopify.extend(...args);
+
+  // node_modules/@shopify/checkout-ui-extensions/build/esm/style/memoize.mjs
+  var NOT_FOUND = "NOT_FOUND";
+  function createSingletonCache(equals) {
+    let entry;
+    return {
+      get(key) {
+        if (entry && equals(entry.key, key)) {
+          return entry.value;
+        }
+        return NOT_FOUND;
+      },
+      put(key, value) {
+        entry = {
+          key,
+          value
+        };
+      },
+      getEntries() {
+        return entry ? [entry] : [];
+      },
+      clear() {
+        entry = void 0;
+      }
+    };
+  }
+  function createLruCache(maxSize, equals) {
+    let entries = [];
+    function get(key) {
+      const cacheIndex = entries.findIndex((entry) => equals(key, entry.key));
+      if (cacheIndex > -1) {
+        const entry = entries[cacheIndex];
+        if (cacheIndex > 0) {
+          entries.splice(cacheIndex, 1);
+          entries.unshift(entry);
+        }
+        return entry.value;
+      }
+      return NOT_FOUND;
+    }
+    function put(key, value) {
+      if (get(key) === NOT_FOUND) {
+        entries.unshift({
+          key,
+          value
+        });
+        if (entries.length > maxSize) {
+          entries.pop();
+        }
+      }
+    }
+    function getEntries() {
+      return entries;
+    }
+    function clear() {
+      entries = [];
+    }
+    return {
+      get,
+      put,
+      getEntries,
+      clear
+    };
+  }
+  var defaultEqualityCheck = (first, second) => {
+    return first === second;
+  };
+  function createCacheKeyComparator(equalityCheck) {
+    return function areArgumentsShallowlyEqual(prev, next) {
+      if (prev === null || next === null || prev.length !== next.length) {
+        return false;
+      }
+      const length = prev.length;
+      for (let i = 0; i < length; i++) {
+        if (!equalityCheck(prev[i], next[i])) {
+          return false;
+        }
+      }
+      return true;
+    };
+  }
+  function memoize(func, equalityCheckOrOptions) {
+    const providedOptions = typeof equalityCheckOrOptions === "object" ? equalityCheckOrOptions : {
+      equalityCheck: equalityCheckOrOptions
+    };
+    const {
+      equalityCheck = defaultEqualityCheck,
+      maxSize = 1,
+      resultEqualityCheck
+    } = providedOptions;
+    const comparator = createCacheKeyComparator(equalityCheck);
+    const cache2 = maxSize === 1 ? createSingletonCache(comparator) : createLruCache(maxSize, comparator);
+    function memoized() {
+      let value = cache2.get(arguments);
+      if (value === NOT_FOUND) {
+        value = func.apply(null, arguments);
+        if (resultEqualityCheck) {
+          const entries = cache2.getEntries();
+          const matchingEntry = entries.find((entry) => resultEqualityCheck(entry.value, value));
+          if (matchingEntry) {
+            value = matchingEntry.value;
+          }
+        }
+        cache2.put(arguments, value);
+      }
+      return value;
+    }
+    memoized.clearCache = () => cache2.clear();
+    return memoized;
+  }
+
+  // node_modules/@shopify/checkout-ui-extensions/build/esm/style/isEqual.mjs
+  function isEqual(first, second) {
+    if (Object.is(first, second)) {
+      return true;
+    }
+    if (typeof first === "object" && typeof second === "object") {
+      if (Array.isArray(first) && Array.isArray(second)) {
+        if (first.length === second.length) {
+          return first.every((value, index) => isEqual(value, second[index]));
+        }
+      } else {
+        const firstEntries = Object.entries(first);
+        const secondEntries = Object.entries(second);
+        if (firstEntries.length === secondEntries.length) {
+          return firstEntries.every(([key]) => isEqual(first[key], second[key]));
+        }
+      }
+    }
+    return false;
+  }
+
+  // node_modules/@shopify/checkout-ui-extensions/build/esm/style/style.mjs
+  var MAX_CACHE_SIZE = 50;
+  var MEMOIZE_OPTIONS = {
+    equalityCheck: isEqual,
+    maxSize: MAX_CACHE_SIZE
+  };
+  var when = function when2(conditions, value) {
+    const config = isConditionalStyle(this) ? {
+      default: this.default,
+      conditionals: [...this.conditionals, {
+        conditions,
+        value
+      }]
+    } : {
+      conditionals: [{
+        conditions,
+        value
+      }]
+    };
+    return createChainableConditionalStyle(config);
+  };
+  var Style = {
+    /**
+     * Sets an optional default value to use when no other condition is met.
+     *
+     * @param defaultValue The default value
+     * @returns The chainable condition style
+     */
+    default: memoize((defaultValue) => createChainableConditionalStyle({
+      default: defaultValue,
+      conditionals: []
+    }), MEMOIZE_OPTIONS),
+    /**
+     * Adjusts the style based on different conditions. All conditions, expressed
+     * as a literal object, must be met for the associated value to be applied.
+     *
+     * The `when` method can be chained together to build more complex styles.
+     *
+     * @param conditions The condition(s)
+     * @param value The conditional value that can be applied if the conditions are met
+     * @returns The chainable condition style
+     */
+    when: memoize(when, MEMOIZE_OPTIONS)
+  };
+  function createChainableConditionalStyle(conditionalStyle) {
+    const proto = {};
+    const returnConditionalStyle = Object.create(proto);
+    Object.assign(returnConditionalStyle, conditionalStyle);
+    proto.when = memoize(when.bind(returnConditionalStyle), MEMOIZE_OPTIONS);
+    return returnConditionalStyle;
+  }
+  function isConditionalStyle(value) {
+    return value !== null && typeof value === "object" && "conditionals" in value;
+  }
 
   // node_modules/@shopify/checkout-ui-extensions/node_modules/@remote-ui/core/build/esm/component.mjs
   function createRemoteComponent(componentType) {
     return componentType;
   }
+
+  // node_modules/@shopify/checkout-ui-extensions/build/esm/components/BlockSpacer/BlockSpacer.mjs
+  var BlockSpacer = createRemoteComponent("BlockSpacer");
 
   // node_modules/@shopify/checkout-ui-extensions/build/esm/components/BlockStack/BlockStack.mjs
   var BlockStack = createRemoteComponent("BlockStack");
@@ -16596,6 +16785,12 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
 
   // node_modules/@shopify/checkout-ui-extensions/build/esm/components/InlineLayout/InlineLayout.mjs
   var InlineLayout = createRemoteComponent("InlineLayout");
+
+  // node_modules/@shopify/checkout-ui-extensions/build/esm/components/InlineSpacer/InlineSpacer.mjs
+  var InlineSpacer = createRemoteComponent("InlineSpacer");
+
+  // node_modules/@shopify/checkout-ui-extensions/build/esm/components/Pressable/Pressable.mjs
+  var Pressable = createRemoteComponent("Pressable");
 
   // node_modules/@shopify/checkout-ui-extensions/build/esm/components/SkeletonImage/SkeletonImage.mjs
   var SkeletonImage = createRemoteComponent("SkeletonImage");
@@ -16906,6 +17101,9 @@ ${errorInfo.componentStack}`);
     }
   };
 
+  // node_modules/@shopify/checkout-ui-extensions-react/build/esm/components/BlockSpacer/BlockSpacer.mjs
+  var BlockSpacer2 = createRemoteReactComponent(BlockSpacer);
+
   // node_modules/@shopify/checkout-ui-extensions-react/build/esm/components/BlockStack/BlockStack.mjs
   var BlockStack2 = createRemoteReactComponent(BlockStack);
 
@@ -16923,6 +17121,14 @@ ${errorInfo.componentStack}`);
   // node_modules/@shopify/checkout-ui-extensions-react/build/esm/components/InlineLayout/InlineLayout.mjs
   var InlineLayout2 = createRemoteReactComponent(InlineLayout);
 
+  // node_modules/@shopify/checkout-ui-extensions-react/build/esm/components/InlineSpacer/InlineSpacer.mjs
+  var InlineSpacer2 = createRemoteReactComponent(InlineSpacer);
+
+  // node_modules/@shopify/checkout-ui-extensions-react/build/esm/components/Pressable/Pressable.mjs
+  var Pressable2 = createRemoteReactComponent(Pressable, {
+    fragmentProps: ["overlay"]
+  });
+
   // node_modules/@shopify/checkout-ui-extensions-react/build/esm/components/SkeletonImage/SkeletonImage.mjs
   var SkeletonImage2 = createRemoteReactComponent(SkeletonImage);
 
@@ -16936,7 +17142,7 @@ ${errorInfo.componentStack}`);
   var View2 = createRemoteReactComponent(View);
 
   // node_modules/@shopify/checkout-ui-extensions-react/build/esm/hooks/api.mjs
-  var import_react16 = __toESM(require_react(), 1);
+  var import_react19 = __toESM(require_react(), 1);
 
   // node_modules/@shopify/checkout-ui-extensions-react/build/esm/errors.mjs
   var CheckoutUIExtensionError = class extends Error {
@@ -16948,57 +17154,23 @@ ${errorInfo.componentStack}`);
 
   // node_modules/@shopify/checkout-ui-extensions-react/build/esm/hooks/api.mjs
   function useExtensionApi() {
-    const api = (0, import_react16.useContext)(ExtensionApiContext);
+    const api = (0, import_react19.useContext)(ExtensionApiContext);
     if (api == null) {
       throw new CheckoutUIExtensionError("You can only call this hook when running as a UI extension.");
     }
     return api;
   }
 
-  // node_modules/@shopify/checkout-ui-extensions-react/build/esm/hooks/subscription.mjs
-  var import_react17 = __toESM(require_react(), 1);
-  function useSubscription(subscription) {
-    const [, setValue] = (0, import_react17.useState)(subscription.current);
-    (0, import_react17.useEffect)(() => {
-      let didUnsubscribe = false;
-      const checkForUpdates = (newValue) => {
-        if (didUnsubscribe) {
-          return;
-        }
-        setValue(newValue);
-      };
-      const unsubscribe = subscription.subscribe(checkForUpdates);
-      checkForUpdates(subscription.current);
-      return () => {
-        didUnsubscribe = true;
-        unsubscribe();
-      };
-    }, [subscription]);
-    return subscription.current;
-  }
-
-  // node_modules/@shopify/checkout-ui-extensions-react/build/esm/hooks/metafields.mjs
-  var import_react18 = __toESM(require_react(), 1);
-  function useApplyMetafieldsChange() {
-    return useExtensionApi().applyMetafieldChange;
-  }
-
   // node_modules/@shopify/checkout-ui-extensions-react/build/esm/hooks/cart-lines.mjs
-  function useCartLines() {
-    const {
-      lines
-    } = useExtensionApi();
-    return useSubscription(lines);
-  }
   function useApplyCartLinesChange() {
     return useExtensionApi().applyCartLinesChange;
   }
 
   // extensions/my-checkout-upsell-digitsonly/src/components/Horizontal.js
-  var import_react21 = __toESM(require_react());
+  var import_react22 = __toESM(require_react());
 
   // extensions/my-checkout-upsell-digitsonly/src/components/HorizontalItemSkeleton.js
-  var import_react19 = __toESM(require_react());
+  var import_react20 = __toESM(require_react());
   var import_jsx_runtime4 = __toESM(require_jsx_runtime());
   function HorizontalItemSkeleton() {
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
@@ -17021,7 +17193,7 @@ ${errorInfo.componentStack}`);
   }
 
   // extensions/my-checkout-upsell-digitsonly/src/components/HorizontalItem.js
-  var import_react20 = __toESM(require_react());
+  var import_react21 = __toESM(require_react());
   var import_jsx_runtime5 = __toESM(require_jsx_runtime());
   function HorizontalItem({
     variantId,
@@ -17033,44 +17205,64 @@ ${errorInfo.componentStack}`);
     adding
   }) {
     const { i18n } = useExtensionApi();
+    const defaultColumns = [64, "fill"];
+    const mediumColumns = [48, "fill"];
+    const imageSrc = img || "https://via.placeholder.com/100/F1F1F1?text=%23";
+    const layoutStyle = Style.default(defaultColumns).when({ viewportInlineSize: { min: "medium" } }, mediumColumns).when({ viewportInlineSize: { min: "large" } }, defaultColumns);
+    const textSpacingStyle = Style.default("base").when({ viewportInlineSize: { min: "medium" } }, "extraTight").when({ viewportInlineSize: { min: "large" } }, "base");
+    const inlineLayoutSpacingStyle = Style.default("tight").when({ viewportInlineSize: { min: "medium" } }, "extraTight").when({ viewportInlineSize: { min: "large" } }, "tight");
+    const buttonTextStyle = Style.default("small").when({ viewportInlineSize: { min: "medium" } }, "extraSmall").when({ viewportInlineSize: { min: "large" } }, "small");
+    const layoutColumnsStyle = Style.default(defaultColumns).when({ viewportInlineSize: { min: "medium" } }, ["30%", "0%", "100%"]).when({ viewportInlineSize: { min: "large" } }, ["30%", "10%", "fill"]);
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
       InlineLayout2,
       {
         spacing: "base",
-        columns: [64, "fill", "auto"],
+        columns: layoutStyle,
         blockAlignment: "center",
+        padding: "none",
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(View2, { border: "none", padding: "none", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
             Image2,
             {
-              border: "base",
+              border: "none",
               borderWidth: "base",
               borderRadius: "loose",
-              source: img || "https://via.placeholder.com/100/F1F1F1?text=%23",
+              source: imageSrc,
               description: title,
               aspectRatio: 1,
               accessibilityDescription: title.split("|")[1]
             }
-          ),
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(BlockStack2, { spacing: "none", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text2, { size: "base", emphasis: "strong", children: title }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(InlineLayout2, { spacing: "tight", columns: ["auto", "auto"], children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text2, { appearance: "accent", emphasis: "strong", children: i18n.formatCurrency(price) }) }),
-            price !== discountedPrice && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(InlineLayout2, { spacing: "extraTight", columns: ["auto", "auto"], children: [
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text2, { appearance: "subdued", children: "You save" }),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text2, { appearance: "success", emphasis: "strong", children: i18n.formatCurrency(price - discountedPrice) })
-            ] })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-            Button2,
-            {
-              kind: "secondary",
-              accessibilityLabel: `Add ${title} to cart`,
-              onPress: () => onPress(variantId, discountedPrice),
-              loading: adding === variantId,
-              disabled: adding && adding !== variantId,
-              children: "Add"
-            }
-          )
+          ) }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(View2, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text2, { size: "medium", emphasis: "strong", appearance: "subdued", children: title }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(BlockSpacer2, { spacing: textSpacingStyle }),
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+              InlineLayout2,
+              {
+                spacing: inlineLayoutSpacingStyle,
+                overflow: "hidden",
+                maxBlockSize: 38,
+                blockAlignment: "center",
+                inlineAlignment: "center",
+                columns: layoutColumnsStyle,
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text2, { appearance: "default", emphasis: "strong", size: buttonTextStyle, children: i18n.formatCurrency(price, { form: "short" }) }),
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(InlineSpacer2, { spacing: "tight" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+                    Button2,
+                    {
+                      kind: "primary",
+                      accessibilityLabel: `Add ${title} to cart`,
+                      onPress: () => onPress(variantId, discountedPrice),
+                      loading: adding === variantId,
+                      disabled: adding && adding !== variantId,
+                      children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text2, { size: buttonTextStyle, children: "Add to order" })
+                    }
+                  )
+                ]
+              }
+            )
+          ] })
         ]
       }
     );
@@ -17078,80 +17270,211 @@ ${errorInfo.componentStack}`);
 
   // extensions/my-checkout-upsell-digitsonly/src/components/Horizontal.js
   var import_jsx_runtime6 = __toESM(require_jsx_runtime());
-  function ButtonView({ direction, onPress }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(View2, { border: "base", padding: "base", blockAlignment: "center", border: "none", children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
-      Button2,
-      {
-        kind: "plain",
-        onPress,
-        disabled: false,
-        children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Icon2, { source: direction === "prev" ? "arrowLeft" : "arrowRight", size: "small" })
-      }
-    ) });
-  }
-  function Skeletons() {
-    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(import_jsx_runtime6.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(HorizontalItemSkeleton, {}, 1),
-      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(HorizontalItemSkeleton, {}, 2),
-      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(HorizontalItemSkeleton, {}, 3)
-    ] });
-  }
+  var DEFAULT_IMAGE_URL = "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_medium.png?format=webp&v=1530129081";
+  var ButtonView = ({ direction, onPress }) => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(View2, { border: "none", padding: "none", blockAlignment: "center", children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+    Pressable2,
+    {
+      border: "base",
+      padding: "extraTight",
+      cornerRadius: "fullyRounded",
+      onPress,
+      inlineAlignment: "center",
+      blockAlignment: "center",
+      children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+        Icon2,
+        {
+          appearance: "subdued",
+          source: direction === "prev" ? "arrowLeft" : "arrowRight",
+          size: "extraSmall"
+        }
+      )
+    }
+  ) });
+  var Skeletons = () => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(HorizontalItemSkeleton, {}, 1);
   function Horizontal({ loading, products, adding }) {
-    var _a, _b;
-    const [currentIndex, setCurrentIndex] = import_react21.default.useState(0);
-    const product = products[currentIndex];
-    const changeProd = (0, import_react21.useCallback)((direction) => {
+    var _a;
+    const [currentIndex, setCurrentIndex] = (0, import_react22.useState)(0);
+    const changeProd = (0, import_react22.useCallback)((direction) => {
       setCurrentIndex((prevIndex) => {
         const nextIndex = prevIndex + (direction === "next" ? 1 : -1);
         const lastIndex = products.length - 1;
         return nextIndex > lastIndex ? 0 : nextIndex < 0 ? lastIndex : nextIndex;
       });
     }, [products]);
-    const changeProdPrev = (0, import_react21.useCallback)(() => {
-      changeProd("prev");
-    }, [changeProd]);
-    const changeProdNext = (0, import_react21.useCallback)(() => {
-      changeProd("next");
-    }, [changeProd]);
-    return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(import_react21.default.Fragment, { children: loading ? /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Skeletons, {}) : product && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(InlineLayout2, { columns: ["10%", "fill", "10%"], children: [
-      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(ButtonView, { direction: "prev", onPress: changeProdPrev }),
-      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(View2, { border: "base", padding: "base", blockAlignment: "center", border: "none", children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+    if (loading) {
+      return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(Skeletons, {});
+    }
+    const product = products[currentIndex];
+    if (!product) {
+      return null;
+    }
+    const variant = product.variants.nodes[0];
+    const viewPaddingStyle = Style.default("tight").when({ viewportInlineSize: { min: "small", max: "medium" } }, "extraTight");
+    return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(InlineLayout2, { columns: [24, "fill", 24], children: [
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(ButtonView, { direction: "prev", onPress: () => changeProd("prev") }),
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(View2, { padding: ["none", "base", "none", "base"], children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(View2, { padding: viewPaddingStyle, blockAlignment: "center", border: "base", borderRadius: "base", children: /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
         HorizontalItem,
         {
-          variantId: product.variants.nodes[0].id,
+          variantId: variant.id,
           title: product.title,
-          price: product.variants.nodes[0].price.amount,
-          discountedPrice: product.variants.nodes[0].price.amount,
-          img: (_b = (_a = product.images.nodes[0]) == null ? void 0 : _a.url) != null ? _b : "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_medium.png?format=webp&v=1530129081",
+          price: variant.price.amount,
+          discountedPrice: variant.price.amount,
+          img: ((_a = product.images.nodes[0]) == null ? void 0 : _a.url) || DEFAULT_IMAGE_URL,
           onPress: product.onPress,
           adding
         },
-        product.variants.nodes[0].id
+        variant.id
+      ) }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(ButtonView, { direction: "next", onPress: () => changeProd("next") })
+    ] });
+  }
+
+  // extensions/my-checkout-upsell-digitsonly/src/components/HorizontalMobile.js
+  var import_react24 = __toESM(require_react());
+
+  // extensions/my-checkout-upsell-digitsonly/src/components/HorizontalItemMobile.js
+  var import_react23 = __toESM(require_react());
+  var import_jsx_runtime7 = __toESM(require_jsx_runtime());
+  function HorizontalItemMobile({
+    variantId,
+    title,
+    price,
+    discountedPrice,
+    img,
+    onPress,
+    adding
+  }) {
+    const { i18n } = useExtensionApi();
+    const imageSrc = img || "https://via.placeholder.com/100/F1F1F1?text=%23";
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
+      InlineLayout2,
+      {
+        spacing: "base",
+        columns: [86, "fill"],
+        blockAlignment: "center",
+        padding: "none",
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(View2, { border: "none", padding: "none", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+            Image2,
+            {
+              border: "none",
+              borderWidth: "base",
+              borderRadius: "loose",
+              source: imageSrc,
+              description: title,
+              aspectRatio: 1,
+              accessibilityDescription: title.split("|")[1]
+            }
+          ) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(View2, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text2, { size: "medium", emphasis: "strong", appearance: "default", children: [
+              title,
+              " ",
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(Text2, { appearance: "subdued", emphasis: "strong", size: "medium", children: [
+                " | ",
+                i18n.formatCurrency(price)
+              ] })
+            ] }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(BlockSpacer2, { spacing: "base" }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+              InlineLayout2,
+              {
+                spacing: "none",
+                overflow: "hidden",
+                maxBlockSize: 38,
+                blockAlignment: "center",
+                inlineAlignment: "start",
+                columns: ["fill"],
+                children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+                  Button2,
+                  {
+                    kind: "primary",
+                    accessibilityLabel: `Add ${title} to cart`,
+                    onPress: () => onPress(variantId, discountedPrice),
+                    loading: adding === variantId,
+                    disabled: adding && adding !== variantId,
+                    children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(Text2, { size: "medium", children: "\xA0 \xA0 \xA0 \xA0Add to order\xA0 \xA0 \xA0\xA0" })
+                  }
+                )
+              }
+            )
+          ] })
+        ]
+      }
+    );
+  }
+
+  // extensions/my-checkout-upsell-digitsonly/src/components/HorizontalMobile.js
+  var import_jsx_runtime8 = __toESM(require_jsx_runtime());
+  var DEFAULT_IMAGE_URL2 = "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_medium.png?format=webp&v=1530129081";
+  var Dot = ({ isActive }) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+    View2,
+    {
+      cornerRadius: "fullyRounded",
+      margin: "extraTight",
+      maxBlockSize: 6,
+      maxInlineSize: 6,
+      children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        Icon2,
+        {
+          appearance: isActive ? "primary" : "subdued",
+          maxBlockSize: 6,
+          maxInlineSize: 6,
+          source: "hollowCircle",
+          size: "extraSmall"
+        }
+      )
+    }
+  );
+  var Skeletons2 = () => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(HorizontalItemSkeleton, {}, 1);
+  function HorizontalMobile({ loading, products, adding }) {
+    var _a;
+    const [currentIndex, setCurrentIndex] = (0, import_react24.useState)(0);
+    const product = products[currentIndex];
+    if (loading) {
+      return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Skeletons2, {});
+    }
+    if (!product) {
+      return null;
+    }
+    const variant = product.variants.nodes[0];
+    return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(View2, { padding: ["base", "none", "none", "none"], children: [
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(View2, { padding: "tight", blockAlignment: "center", border: "base", borderRadius: "base", children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+        HorizontalItemMobile,
+        {
+          variantId: variant.id,
+          title: product.title,
+          price: variant.price.amount,
+          discountedPrice: variant.price.amount,
+          img: ((_a = product.images.nodes[0]) == null ? void 0 : _a.url) || DEFAULT_IMAGE_URL2,
+          onPress: product.onPress,
+          adding
+        },
+        variant.id
       ) }),
-      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(ButtonView, { direction: "next", onPress: changeProdNext })
-    ] }) });
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(InlineLayout2, { blockAlignment: "center", columns: [16, 16, 16], inlineAlignment: "center", spacing: "none", display: "inline", padding: ["base", "none", "none", "none"], children: products.map((_, index) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Pressable2, { onPress: () => setCurrentIndex(index), children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Dot, { isActive: index === currentIndex }) }, index)) })
+    ] });
   }
 
   // extensions/my-checkout-upsell-digitsonly/src/index.jsx
-  var import_jsx_runtime7 = __toESM(require_jsx_runtime());
-  render2("Checkout::Dynamic::Render", () => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(App, {}));
+  var import_jsx_runtime9 = __toESM(require_jsx_runtime());
   function App() {
-    const lines = useCartLines();
     const applyCartLinesChange = useApplyCartLinesChange();
-    const applyMetafieldsChange = useApplyMetafieldsChange();
     const { query } = useExtensionApi();
-    const [products, setProducts] = (0, import_react22.useState)([]);
-    const [loading, setLoading] = (0, import_react22.useState)(false);
-    const [adding, setAdding] = (0, import_react22.useState)(false);
-    const [showError, setShowError] = (0, import_react22.useState)(false);
-    const handleError = (0, import_react22.useCallback)((error) => {
+    const [products, setProducts] = (0, import_react25.useState)([]);
+    const [loading, setLoading] = (0, import_react25.useState)(false);
+    const [adding, setAdding] = (0, import_react25.useState)(false);
+    const [showError, setShowError] = (0, import_react25.useState)(false);
+    const handleError = (0, import_react25.useCallback)((error) => {
       console.error(error);
       setShowError(true);
       setTimeout(() => setShowError(false), 3e3);
     }, []);
-    const handlePress = (0, import_react22.useCallback)((variantId, discountedPrice) => __async(this, null, function* () {
+    const hideOnMobile = Style.when({ viewportInlineSize: { min: "small" } }, 0).when({ viewportInlineSize: { min: "large" } }, "100%");
+    const hideOnDesktop = Style.when({ viewportInlineSize: { min: "small" } }, "100%").when({ viewportInlineSize: { min: "large" } }, 0);
+    const handlePress = (0, import_react25.useCallback)((variantId, discountedPrice) => __async(this, null, function* () {
+      setAdding(variantId);
       try {
-        setAdding(variantId);
         const result = yield applyCartLinesChange({
           type: "addCartLine",
           merchandiseId: variantId,
@@ -17167,10 +17490,10 @@ ${errorInfo.componentStack}`);
         setAdding(null);
       }
     }), [applyCartLinesChange, handleError]);
-    (0, import_react22.useEffect)(() => {
+    (0, import_react25.useEffect)(() => {
       const fetchProducts = () => __async(this, null, function* () {
+        setLoading(true);
         try {
-          setLoading(true);
           const { data } = yield query(
             `query ($first: Int!) {
             products(first: $first) {
@@ -17204,13 +17527,27 @@ ${errorInfo.componentStack}`);
       });
       fetchProducts();
     }, [query, handleError]);
-    return products.length == 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(BlockStack2, { spacing: "loose", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
-      Horizontal,
-      {
-        loading,
-        products,
-        adding
-      }
-    ) });
+    products.map((product) => {
+      product.onPress = handlePress;
+    });
+    return products.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(BlockStack2, { spacing: "loose", overflow: "hidden", maxInlineSize: hideOnMobile, maxBlockSize: hideOnMobile, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+        Horizontal,
+        {
+          loading,
+          products,
+          adding
+        }
+      ) }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(BlockStack2, { overflow: "hidden", maxInlineSize: hideOnDesktop, maxBlockSize: hideOnDesktop, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+        HorizontalMobile,
+        {
+          loading,
+          products,
+          adding
+        }
+      ) })
+    ] });
   }
+  render2("Checkout::Dynamic::Render", () => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(App, {}));
 })();
