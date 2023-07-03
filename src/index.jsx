@@ -24,8 +24,8 @@ function App() {
     setTimeout(() => setShowError(false), 3000);
   }, []);
 
-  const hideOnMobile = Style.when({viewportInlineSize: {min: 'small'}}, 0).when({viewportInlineSize: {min: 'large'}}, '100%');
-  const hideOnDesktop = Style.when({viewportInlineSize: {min: 'small'}}, '100%').when({viewportInlineSize: {min: 'large'}}, 0);
+  const hideOnMobile = Style.default(0).when({viewportInlineSize: {min: 'small'}}, 0).when({viewportInlineSize: {min: 'medium'}}, '100%').when({viewportInlineSize: {min: 'large'}}, '100%');
+  const hideOnDesktop = Style.when({viewportInlineSize: {min: 'small'}}, '100%').when({viewportInlineSize: {min: 'medium'}}, 0).when({viewportInlineSize: {min: 'large'}}, 0);
 
   const handlePress = useCallback(async (variantId, discountedPrice) => {
     setAdding(variantId);
